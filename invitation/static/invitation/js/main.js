@@ -115,7 +115,25 @@ function setSound(on) {
 }
 $('soundBtn').onclick = () => setSound(!soundOn);
 
+// Telefonda: butun ekran + eniga (Android'da ishlaydi; iPhone'da "eniga buring" yozuvi chiqadi)
+const isPhone = () => window.matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
+async function goLandscape() {
+  if (!isPhone()) return;
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch { /* brauzer ruxsat bermadi — "eniga buring" yozuvi yordam beradi */ }
+}
+$('rotateSkip').onclick = () => {
+  document.body.classList.add('allow-portrait');
+  try { sessionStorage.setItem('allowPortrait', '1'); } catch { /* */ }
+};
+try { if (sessionStorage.getItem('allowPortrait')) document.body.classList.add('allow-portrait'); } catch { /* */ }
+
 function enter() {
+  goLandscape();
+  document.body.classList.add('started');
   $('loader').classList.add('fade');
   setTimeout(() => $('loader').remove(), 900);
   state.started = true;
@@ -572,6 +590,7 @@ function loop() {
 $('actionBtn').onclick = () => interact(nearest);
 
 window.addEventListener('resize', () => {
+  joyReset();
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
